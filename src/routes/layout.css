@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@layer utilities {
+  .text-outline-gray {
+    text-shadow:
+      1px 1px 0 #808080,
+     -1px 1px 0 #808080,
+      1px -1px 0 #808080,
+     -1px -1px 0 #808080;
+  }
+}

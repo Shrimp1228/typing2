@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- L-shaped Enter key background -->
+  <rect width="32" height="32" rx="2" fill="#1f2937"/>
+
+  <!-- L-shaped key body -->
+  <path d="M3 3 L29 3 L29 29 L12 29 L12 18 L3 18 Z" fill="#374151" stroke="#6b7280" stroke-width="1" rx="2"/>
+
+  <!-- Enter arrow (down to left) -->
+  <path d="M22 11 L22 19 L16 19" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M19 16 L16 19 L19 22" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
