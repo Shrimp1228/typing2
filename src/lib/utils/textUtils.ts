@@ -1,4 +1,75 @@
 /**
+ * ルビ記法を除去してプレーンテキストに変換する（入力判定用）
+ * 例: {漢字|かんじ} → 漢字
+ */
+export function toPlainText(text: string): string {
+  return text.replace(/\{([^|]+)\|([^}]+)\}/g, '$1')
+}
+
+/**
+ * 表示用セグメント
+ */
+export interface DisplaySegment {
+  text: string       // 表示テキスト（漢字部分）
+  ruby?: string      // ルビ（ある場合）
+  startIndex: number // プレーンテキスト上の開始位置
+  endIndex: number   // プレーンテキスト上の終了位置
+}
+
+/**
+ * ルビ記法を解析して表示用セグメント配列を生成する
+ */
+export function parseRubySegments(text: string): DisplaySegment[] {
+  const segments: DisplaySegment[] = []
+  const regex = /\{([^|]+)\|([^}]+)\}/g
+  let lastIndex = 0
+  let plainIndex = 0
+  let match
+
+  while ((match = regex.exec(text)) !== null) {
+    // ルビ記法の前の通常テキスト
+    if (match.index > lastIndex) {
+      const normalText = text.slice(lastIndex, match.index)
+      for (const char of normalText) {
+        segments.push({
+          text: char,
+          startIndex: plainIndex,
+          endIndex: plainIndex + 1
+        })
+        plainIndex++
+      }
+    }
+
+    // ルビ付きテキスト（まとめて1セグメント）
+    const rubyText = match[1]
+    const ruby = match[2]
+    segments.push({
+      text: rubyText,
+      ruby: ruby,
+      startIndex: plainIndex,
+      endIndex: plainIndex + rubyText.length
+    })
+    plainIndex += rubyText.length
+    lastIndex = regex.lastIndex
+  }
+
+  // 残りの通常テキスト
+  if (lastIndex < text.length) {
+    const normalText = text.slice(lastIndex)
+    for (const char of normalText) {
+      segments.push({
+        text: char,
+        startIndex: plainIndex,
+        endIndex: plainIndex + 1
+      })
+      plainIndex++
+    }
+  }
+
+  return segments
+}
+
+/**
  * 入力文字をお題に合わせて全角・半角変換する
  * @param input 入力文字列
  * @param target 目標文字列（お題）

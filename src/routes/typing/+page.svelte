@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { getRandomTopic, type Topic } from '$lib/utils/topicsManager'
-  import { normalizeChar, calculateCorrectLength } from '$lib/utils/textUtils'
+  import { normalizeChar, calculateCorrectLength, toPlainText, parseRubySegments } from '$lib/utils/textUtils'
   import { triggerBackgroundChange } from '$lib/utils/eventUtils'
   import { TypingStatsManager, type TypingStats } from '$lib/utils/typingStats'
   import { TypeSoundManager } from '$lib/utils/typeSoundManager'
@@ -17,20 +17,25 @@
   // お題を選出
   onMount(() => currentTopic = getRandomTopic())
 
+  // プレーンテキスト（入力判定用）と表示用セグメント
+  $: plainDescription = currentTopic ? toPlainText(currentTopic.description) : ''
+  $: displaySegments = currentTopic ? parseRubySegments(currentTopic.description) : []
+  $: displayTitle = currentTopic ? parseRubySegments(currentTopic.title) : []
+
   // 一致判定
   $: normalizedInput = currentTopic
-      ? normalizeChar(userInput, currentTopic.description)
+      ? normalizeChar(userInput, plainDescription)
       : userInput
   $: correctLength = currentTopic
-      ? calculateCorrectLength(normalizedInput, currentTopic.description)
+      ? calculateCorrectLength(normalizedInput, plainDescription)
       : 0
 
   // 完全一致判定（IME変換中でない場合のみ）
   $: if (currentTopic && !isComposing && normalizedInput.length > 0
-      && correctLength === currentTopic.description.length && !showResults) {
+      && correctLength === plainDescription.length && !showResults) {
     // タイピング完了
     statsManager.finish()
-    finalStats = statsManager.getStats(currentTopic.description.length)
+    finalStats = statsManager.getStats(plainDescription.length)
     showResults = true
   }
 
@@ -127,12 +132,32 @@
   <div class="mt-5">
     {#if currentTopic}
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-300 mb-4">{currentTopic.title}</h2>
+        <h2 class="text-2xl font-bold text-gray-300 mb-4">
+          {#each displayTitle as segment}
+            {#if segment.ruby}
+              <ruby>{segment.text}<rt>{segment.ruby}</rt></ruby>
+            {:else}
+              <span>{segment.text}</span>
+            {/if}
+          {/each}
+        </h2>
         <div id="description" class="text-lg text-gray-400 text-left leading-relaxed px-3 h-[200px] overflow-y-auto">
-          {#each Array.from(currentTopic.description) as char, index}
-            <span id={"correct-" + index} class:bg-green-800={index < correctLength}>
-              {char}
-            </span>
+          {#each displaySegments as segment}
+            {#if segment.ruby}
+              <ruby
+                id={"correct-" + segment.startIndex}
+                class={segment.endIndex <= correctLength ? 'bg-green-800' : segment.startIndex < correctLength ? 'bg-green-800/50' : ''}
+              >
+                {segment.text}<rt>{segment.ruby}</rt>
+              </ruby>
+            {:else}
+              <span
+                id={"correct-" + segment.startIndex}
+                class:bg-green-800={segment.endIndex <= correctLength}
+              >
+                {segment.text}
+              </span>
+            {/if}
           {/each}
         </div>
       </div>
