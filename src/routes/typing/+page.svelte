@@ -52,7 +52,7 @@
     // キー押下を記録とタイプ音再生
     if (statsManager.started) {
       statsManager.recordKeyPress(event.key)
-      
+
       // 文字入力キーのみタイプ音を再生
       if (!['Control', 'Shift', 'Alt', 'Meta', 'Tab', 'CapsLock', 'Escape',
             'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
@@ -67,6 +67,31 @@
   const handleInput = (e: Event) => {
     const textarea = e.target as HTMLTextAreaElement
     userInput = textarea.value
+    autoScroll()
+  }
+
+  // 自動スクロール処理
+  const autoScroll = () => {
+    // お題と一致した入力文字がない場合はskip
+    if (correctLength < 1) return
+    // 一致済み文字列を取得
+    const correctInput = Array.from(normalizedInput).slice(0, correctLength).join('')
+    // 一致済み文字列の「。(読点)」をカウント
+    const count = (correctInput.match(/。/g) || []).length;
+    // 自動スクロール
+    const d = document.querySelector('#description') as HTMLDivElement
+    if (count < 3) {
+      // 一番上にスクロール
+      d.scrollTop = 0
+    } else {
+      // 最後から2番目の「。(読点)」の位置にスクロール
+      const li = correctInput.lastIndexOf('。', correctInput.lastIndexOf('。') - 1)
+      const c = document.querySelector('#correct-' + li) as HTMLDivElement
+      d.scrollTo({
+        top: c.offsetTop - d.offsetTop,
+        behavior: "smooth"
+      })
+    }
   }
 
   // タイピングリセット
@@ -78,6 +103,8 @@
     finalStats = null
     const textarea = document.querySelector('textarea') as HTMLTextAreaElement
     if (textarea) textarea.value = ''
+    const d = document.querySelector('#description') as HTMLDivElement
+    d.scrollTop = 0
     triggerBackgroundChange()
   }
 
@@ -101,9 +128,9 @@
     {#if currentTopic}
       <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-300 mb-4">{currentTopic.title}</h2>
-        <div class="text-lg text-gray-400 text-left leading-relaxed px-3">
+        <div id="description" class="text-lg text-gray-400 text-left leading-relaxed px-3 h-[200px] overflow-y-auto">
           {#each Array.from(currentTopic.description) as char, index}
-            <span class:bg-green-800={index < correctLength}>
+            <span id={"correct-" + index} class:bg-green-800={index < correctLength}>
               {char}
             </span>
           {/each}
@@ -187,17 +214,15 @@
     </div>
   {:else}
     <!-- 入力エリア -->
-    <div class="mt-12">
+    <div class="text-left pl-[3px]">
       <!-- svelte-ignore a11y-autofocus -->
       <textarea
-        class="bg-black text-gray-100 text-lg w-full rounded-sm resize-none overflow-hidden"
+        class="bg-black text-gray-100 text-lg w-full rounded-sm resize-none overflow-hidden pl-[3px] w-[482px]"
         rows="3"
         autofocus
         oninput={handleInput}
         oncompositionstart={handleCompositionStart}
         oncompositionend={handleCompositionEnd}
-        inputmode="kana"
-        style="ime-mode: active; -webkit-ime-mode: active; -moz-ime-mode: active;"
       ></textarea>
     </div>
   {/if}
