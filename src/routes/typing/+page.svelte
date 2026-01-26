@@ -168,10 +168,26 @@
 
   {#if showResults && finalStats}
     <!-- 結果表示 -->
-    <div class="bg-gray-800 p-6 rounded-lg mx-auto max-w-md">
+    <div class="bg-gray-800 p-6 rounded-lg mx-auto max-w-md mb-2">
       <h3 class="text-2xl font-bold text-green-400 text-center mb-4">結果</h3>
 
       <div class="space-y-3">
+        <!-- CHARS -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span class="text-gray-300">CHARS</span>
+            <div class="relative group">
+              <span class="border text-xs font-medium px-[7px] py-0.5 rounded-full">?</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                お題の総文字数
+              </div>
+            </div>
+            <span class="text-gray-300">:</span>
+          </div>
+          <span class="text-xl font-mono text-white">{plainDescription.length}文字</span>
+        </div>
+      </div>
+
         <!-- KPM -->
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">
@@ -231,7 +247,6 @@
           </div>
           <span class="text-xl font-mono text-white">{finalStats.deleteCount}回</span>
         </div>
-      </div>
 
       <div class="mt-6 text-sm text-gray-400 text-center">
         ESCキーで次のお題へ
@@ -249,6 +264,20 @@
         oncompositionstart={handleCompositionStart}
         oncompositionend={handleCompositionEnd}
       ></textarea>
+    </div>
+
+    <!-- プログレスバー -->
+    <div class="mt-3 px-1">
+      <div class="flex justify-between text-xs text-gray-400 mb-1">
+        <span>Progress</span>
+        <span>{correctLength} / {plainDescription.length}</span>
+      </div>
+      <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-green-500 transition-all duration-150 ease-out"
+          style="width: {plainDescription.length > 0 ? (correctLength / plainDescription.length) * 100 : 0}%"
+        ></div>
+      </div>
     </div>
   {/if}
 </div>
