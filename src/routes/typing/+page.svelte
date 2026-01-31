@@ -56,7 +56,11 @@
 
     // キー押下を記録とタイプ音再生
     if (statsManager.started) {
-      statsManager.recordKeyPress(event.key)
+      // キー押下回数を記録
+      statsManager.recordKeyPress()
+
+      // Delete/Backspace押下回数を記録
+      if (event.code === 'Backspace' || event.code === 'Delete') statsManager.recordDelete()
 
       // 文字入力キーのみタイプ音を再生
       if (!['Control', 'Shift', 'Alt', 'Meta', 'Tab', 'CapsLock', 'Escape',
@@ -85,11 +89,11 @@
     const count = (correctInput.match(/。/g) || []).length;
     // 自動スクロール
     const d = document.querySelector('#description') as HTMLDivElement
-    if (count < 3) {
+    if (count < 2) {
       // 一番上にスクロール
       d.scrollTop = 0
     } else {
-      // 最後から2番目の「。(読点)」の位置にスクロール
+      // 入力済みの最後から2番目の「。(読点)」の位置にスクロール
       const li = correctInput.lastIndexOf('。', correctInput.lastIndexOf('。') - 1)
       const c = document.querySelector('#correct-' + li) as HTMLDivElement
       d.scrollTo({
@@ -125,14 +129,14 @@
   }
 </script>
 
-<div class="mt-10 text-center bg-black/60 w-128 p-1 rounded-sm">
+<div class="mt-2 text-center bg-black/60 w-128 p-1 rounded-sm">
   <div class="text-sm text-gray-500">
     ESCキーを押すと新しいお題に変更されます。
   </div>
-  <div class="mt-5">
+  <div>
     {#if currentTopic}
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-300 mb-4">
+      <div class="mb-1">
+        <h2 class="text-2xl font-bold text-gray-300 mb-1">
           {#each displayTitle as segment}
             {#if segment.ruby}
               <ruby>{segment.text}<rt>{segment.ruby}</rt></ruby>
@@ -257,7 +261,7 @@
     <div class="text-left pl-[3px]">
       <!-- svelte-ignore a11y-autofocus -->
       <textarea
-        class="bg-black text-gray-100 text-lg w-full rounded-sm resize-none overflow-hidden pl-[3px] w-[482px]"
+        class="bg-black text-gray-100 text-lg w-full rounded-sm resize-none overflow-hidden pl-[12px] pr-[29px] w-[482px]"
         rows="3"
         autofocus
         oninput={handleInput}

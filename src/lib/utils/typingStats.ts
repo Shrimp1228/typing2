@@ -37,11 +37,17 @@ export class TypingStatsManager {
   /**
    * キー押下を記録
    */
-  recordKeyPress(key: string): void {
+  recordKeyPress(): void {
     if (!this.isStarted) return
     this.keyPressCount++
-    // Delete/Backspaceの記録
-    if (key === 'Delete' || key === 'Backspace') this.deleteCount++
+  }
+
+  /**
+   * 削除操作を記録
+   */
+  recordDelete(): void {
+    if (!this.isStarted) return
+    this.deleteCount++
   }
 
   /**
