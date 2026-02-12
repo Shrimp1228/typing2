@@ -1,23 +1,25 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import { goto } from '$app/navigation';
-  import { base } from '$app/paths';
 
   // キー操作イベント
   function handleKeyDown(event: KeyboardEvent) {
-    if (event.key !== ' ') return
-    // ゲーム開始
-    goto(`${base}/typing`)
-    event.preventDefault()
+    if (event.key === ' ') {
+      // 通常モード開始
+      goto('/typing')
+      event.preventDefault()
+    } else if (event.key === 'Escape') {
+      // 制限時間モード開始
+      goto('/typing?mode=timed')
+      event.preventDefault()
+    }
   }
 </script>
 
-<div class="mt-20 text-center text-gray-300 text-outline-gray">
+<div class="mt-40 text-center text-gray-300 text-outline-gray">
   Typing Practiceは日本語長文タイピング練習サイトです。<br>
-  SPACEキーを押すと開始します。
-</div>
-<div class="mt-40">
-  <Button href="/typing">START</Button>
+  SPACEキーを押すと開始します。<br>
+  ESCキーを押すと制限時間モード（90秒）で開始します。
 </div>
 
 <!-- README.mdリンク -->

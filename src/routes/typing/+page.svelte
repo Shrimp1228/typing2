@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
+  import { page } from '$app/stores'
   import { getRandomTopic, type Topic } from '$lib/utils/topicsManager'
   import { normalizeChar, calculateCorrectLength, toPlainText, parseRubySegments } from '$lib/utils/textUtils'
   import { triggerBackgroundChange } from '$lib/utils/eventUtils'
@@ -14,8 +15,23 @@
   let finalStats: TypingStats | null = null
   let isComposing = false // IME変換中フラグ
 
+  // 制限時間モード関連
+  const TIME_LIMIT = 90
+  $: isTimedMode = $page.url.searchParams.get('mode') === 'timed'
+  let elapsedTime = 0
+  let timerId: ReturnType<typeof setInterval> | null = null
+  let timerStarted = false
+
   // お題を選出
   onMount(() => currentTopic = getRandomTopic())
+
+  // クリーンアップ
+  onDestroy(() => {
+    if (timerId) {
+      clearInterval(timerId)
+      timerId = null
+    }
+  })
 
   // プレーンテキスト（入力判定用）と表示用セグメント
   $: plainDescription = currentTopic ? toPlainText(currentTopic.description) : ''
@@ -30,10 +46,31 @@
       ? calculateCorrectLength(normalizedInput, plainDescription)
       : 0
 
+  // 制限時間タイマーを開始
+  function startTimedModeTimer() {
+    if (timerStarted || !isTimedMode) return
+    timerStarted = true
+    timerId = setInterval(() => {
+      elapsedTime++
+      if (elapsedTime >= TIME_LIMIT) {
+        clearInterval(timerId!)
+        timerId = null
+        // 強制終了
+        statsManager.finish()
+        finalStats = statsManager.getStats(correctLength)
+        showResults = true
+      }
+    }, 1000)
+  }
+
   // 完全一致判定（IME変換中でない場合のみ）
   $: if (currentTopic && !isComposing && normalizedInput.length > 0
       && correctLength === plainDescription.length && !showResults) {
     // タイピング完了
+    if (timerId) {
+      clearInterval(timerId)
+      timerId = null
+    }
     statsManager.finish()
     finalStats = statsManager.getStats(plainDescription.length)
     showResults = true
@@ -52,7 +89,11 @@
     if (!statsManager.started &&
         !['Control', 'Shift', 'Alt', 'Meta', 'Tab', 'CapsLock',
           'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
-        .includes(event.key)) statsManager.start()
+        .includes(event.key)) {
+      statsManager.start()
+      // 制限時間モードならタイマー開始
+      if (isTimedMode) startTimedModeTimer()
+    }
 
     // キー押下を記録とタイプ音再生
     if (statsManager.started) {
@@ -110,6 +151,13 @@
     currentTopic = getRandomTopic()
     userInput = ''
     finalStats = null
+    // タイマーのリセット
+    if (timerId) {
+      clearInterval(timerId)
+      timerId = null
+    }
+    elapsedTime = 0
+    timerStarted = false
     const textarea = document.querySelector('textarea') as HTMLTextAreaElement
     if (textarea) textarea.value = ''
     const d = document.querySelector('#description') as HTMLDivElement
@@ -135,8 +183,8 @@
   </div>
   <div>
     {#if currentTopic}
-      <div class="mb-1">
-        <h2 class="text-2xl font-bold text-gray-300 mb-1">
+      <div class="mb-1 relative">
+        <h2 class="text-2xl font-bold text-gray-300 mb-1 text-center">
           {#each displayTitle as segment}
             {#if segment.ruby}
               <ruby>{segment.text}<rt>{segment.ruby}</rt></ruby>
@@ -145,6 +193,22 @@
             {/if}
           {/each}
         </h2>
+        {#if isTimedMode}
+          <div class="absolute right-5 top-0 inline-flex items-center">
+            <svg class="w-8 h-8" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="#374151" stroke-width="3"/>
+              <circle
+                cx="18" cy="18" r="16" fill="none"
+                stroke="#eab308" stroke-width="3"
+                stroke-dasharray="100.53"
+                stroke-dashoffset={100.53 - (elapsedTime / TIME_LIMIT) * 100.53}
+                transform="rotate(-90 18 18)"
+                class="transition-all ease-linear {elapsedTime === 0 ? 'duration-200' : 'duration-1000'}"
+              />
+            </svg>
+            <span class="text-sm text-gray-400 ml-1">{elapsedTime}s</span>
+          </div>
+        {/if}
         <div id="description" class="text-lg text-gray-400 text-left leading-relaxed px-3 h-[200px] overflow-y-auto">
           {#each displaySegments as segment}
             {#if segment.ruby}
@@ -183,12 +247,12 @@
             <div class="relative group">
               <span class="border text-xs font-medium px-[7px] py-0.5 rounded-full">?</span>
               <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                お題の総文字数
+                {isTimedMode ? '入力した文字数' : 'お題の総文字数'}
               </div>
             </div>
             <span class="text-gray-300">:</span>
           </div>
-          <span class="text-xl font-mono text-white">{plainDescription.length}文字</span>
+          <span class="text-xl font-mono text-white">{isTimedMode ? correctLength : plainDescription.length}文字</span>
         </div>
       </div>
 
