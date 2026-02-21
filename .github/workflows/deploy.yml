@@ -33,6 +33,7 @@ jobs:
       - name: Build
         env:
           NODE_ENV: production
+          BASE_PATH: '/typing2'
         run: npm run build
 
       - name: Upload artifact
