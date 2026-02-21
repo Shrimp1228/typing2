@@ -6,11 +6,11 @@
   function handleKeyDown(event: KeyboardEvent) {
     if (event.key === ' ') {
       // 通常モード開始
-      goto('/typing')
+      goto('/typing2')
       event.preventDefault()
     } else if (event.key === 'Escape') {
       // 制限時間モード開始
-      goto('/typing?mode=timed')
+      goto('/typing2?mode=timed')
       event.preventDefault()
     }
   }
