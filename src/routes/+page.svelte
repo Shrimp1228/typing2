@@ -1,16 +1,17 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
 
   // キー操作イベント
   function handleKeyDown(event: KeyboardEvent) {
     if (event.key === ' ') {
       // 通常モード開始
-      goto('/typing')
+      goto(`${base}/typing`)
       event.preventDefault()
     } else if (event.key === 'Escape') {
       // 制限時間モード開始
-      goto('/typing?mode=timed')
+      goto(`${base}/typing?mode=timed`)
       event.preventDefault()
     }
   }
